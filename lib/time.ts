@@ -6,7 +6,7 @@ export function fmtHMS(ms: number): string {
   return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':');
 }
 
-export function fmtHours(hrs: number): string {
+export function fmtHours(hrs: number): string { 
   return hrs.toFixed(2) + 'h';
 }
 
