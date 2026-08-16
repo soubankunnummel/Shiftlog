@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { fmtHMS, fmtHours, dateStr, timeStr, niceDate, splitSessionPortions } from '@/lib/time';
 import { subscribeToPush, getNotificationPermissionState } from '@/lib/push';
+import { useAuthActions } from '@convex-dev/auth/react';
 
 const ACCENT = '#3B5BDB';
 const AMBER = '#B4690E';
@@ -63,6 +64,8 @@ type TabId = 'timer' | 'log' | 'report' | 'settings';
 export default function ShiftlogApp() {
   const state = useQuery(api.state.get);
   const sessions = useQuery(api.sessions.list);
+  const user = useQuery(api.users.me);
+  const { signOut } = useAuthActions();
 
   const startMut = useMutation(api.state.start);
   const pauseMut = useMutation(api.state.pause);
@@ -310,8 +313,17 @@ export default function ShiftlogApp() {
             <h1 className="text-xl font-semibold tracking-tight">Shiftlog</h1>
             <p className="text-xs" style={{ color: MUTED }}>Part-time hours &amp; timesheet tracker</p>
           </div>
-          <div className="text-xs font-mono" style={{ color: MUTED }}>
-            {new Date(now).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+          <div className="flex flex-col items-end gap-1 text-right">
+            <div className="text-xs font-mono" style={{ color: MUTED }}>
+              {new Date(now).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+            </div>
+            <div className="text-xs" style={{ color: MUTED }}>{user?.email}</div>
+            <div className="flex gap-2">
+              {user?.role === 'admin' && (
+                <a href="/admin" className="text-xs font-medium underline" style={{ color: ACCENT }}>Admin</a>
+              )}
+              <button onClick={() => void signOut()} className="text-xs font-medium underline" style={{ color: MUTED }}>Sign out</button>
+            </div>
           </div>
         </div>
 

@@ -83,6 +83,32 @@ npx convex env set VAPID_SUBJECT mailto:you@example.com
 
 > `VAPID_SUBJECT` must be a valid `mailto:` or `https://` URI — it's required by the Web Push spec so push services can contact you if something goes wrong.
 
+### 3b. Set Up Authentication
+
+Shiftlog requires sign-in. Each account has its own timer, sessions, settings,
+and push subscriptions. A fixed **admin** account can manage all users at `/admin`.
+
+```bash
+# One-time: configure auth (done automatically by `npx @convex-dev/auth`)
+npx @convex-dev/auth
+
+# The admin's constant email + password (Convex env vars, never in code)
+npx convex env set AUTH_ADMIN_EMAIL you@example.com
+npx convex env set AUTH_ADMIN_PASSWORD <a-strong-password>
+```
+
+- Regular users sign up / sign in with email + password.
+- The admin email is **reserved** — normal users cannot register it. The admin
+  signs in via the **Admin** toggle on the sign-in screen.
+- To rotate the admin password, just re-run `npx convex env set AUTH_ADMIN_PASSWORD`.
+
+### 3c. Backfill pre-auth data (first time only)
+
+Existing sessions/settings created before auth have no owner. After the admin
+account exists, open the Convex dashboard → **Functions** →
+`migrateLegacy/backfillLegacyRows`, pass the **admin user's `_id`** as `userId`,
+and run it. Your old data is assigned to the admin account.
+
 ### 4. Start the Dev Server
 
 ```bash
@@ -99,17 +125,26 @@ Open [http://localhost:3000](http://localhost:3000) — you're ready to track sh
 shiftlog/
 ├── app/
 │   ├── layout.tsx              # Root layout with ConvexClientProvider
-│   ├── page.tsx                # Entry page
-│   └── ConvexClientProvider.tsx
+│   ├── page.tsx                # Entry page (auth-gated)
+│   ├── ConvexClientProvider.tsx
+│   └── admin/
+│       └── page.tsx            # Admin dashboard (user management)
 ├── components/
+│   ├── AuthScreen.tsx          # Sign-in / sign-up / admin sign-in
 │   └── ShiftlogApp.tsx         # Main UI — timer, log, report, settings tabs
 ├── convex/
-│   ├── schema.ts               # Database schema (sessions, running, settings, subscriptions)
+│   ├── schema.ts               # Database schema (auth tables + per-user data)
+│   ├── auth.ts                 # Convex Auth providers (Password + fixed Admin)
+│   ├── auth.config.ts          # JWT auth config
+│   ├── authz.ts                # requireUser / requireAdmin helpers
+│   ├── users.ts                # api.users.me — current user (with role)
+│   ├── admin.ts                # Admin-only queries/mutations
 │   ├── state.ts                # Timer mutations: start, pause, resume, stop
 │   ├── sessions.ts             # Session CRUD: list, create, update, remove
 │   ├── subscriptions.ts        # Web Push subscription management
 │   ├── push.ts                 # VAPID push action (server-side, secure)
-│   ├── reminders.ts            # Idle + proactive reminder logic
+│   ├── reminders.ts            # Idle + proactive reminder logic (per user)
+│   ├── migrateLegacy.ts        # One-time backfill of pre-auth rows
 │   └── crons.ts                # Scheduled cron: fires every minute
 ├── lib/
 │   ├── time.ts                 # Time formatting utilities
@@ -186,12 +221,22 @@ Set the following environment variables in your hosting provider:
 | `VAPID_PUBLIC_KEY` | Convex dashboard env vars |
 | `VAPID_PRIVATE_KEY` | Convex dashboard env vars |
 | `VAPID_SUBJECT` | Convex dashboard env vars |
+| `AUTH_ADMIN_EMAIL` | Convex dashboard env vars (same value on the production deployment) |
+| `AUTH_ADMIN_PASSWORD` | Convex dashboard env vars (same value on the production deployment) |
+
+> For the production Convex deployment, run `npx convex deploy` first, then set
+> `AUTH_ADMIN_EMAIL` / `AUTH_ADMIN_PASSWORD` against the production deployment
+> with `npx convex env set --prod ...`.
 
 ---
 
 ## 🔒 Single-User Design
 
-Shiftlog is intentionally built as a **personal, single-user app** — there's no authentication layer. The `settings` and `running` tables are singletons (one row each). If you want to add multi-user support, add a `userId` field and matching indexes to every table in `convex/schema.ts`.
+> **Update:** Shiftlog now has real authentication (Convex Auth). Each account
+> owns its own sessions, timer, settings, and push subscriptions. There is a
+> fixed admin account (constant email/password from Convex env vars) with a
+> management dashboard at `/admin`. All Convex functions require authentication
+> and enforce per-user ownership.
 
 ---
 

@@ -8,12 +8,18 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
+import type * as auth from "../auth.js";
+import type * as authz from "../authz.js";
 import type * as crons from "../crons.js";
+import type * as http from "../http.js";
+import type * as migrateLegacy from "../migrateLegacy.js";
 import type * as push from "../push.js";
 import type * as reminders from "../reminders.js";
 import type * as sessions from "../sessions.js";
 import type * as state from "../state.js";
 import type * as subscriptions from "../subscriptions.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -22,12 +28,18 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
+  auth: typeof auth;
+  authz: typeof authz;
   crons: typeof crons;
+  http: typeof http;
+  migrateLegacy: typeof migrateLegacy;
   push: typeof push;
   reminders: typeof reminders;
   sessions: typeof sessions;
   state: typeof state;
   subscriptions: typeof subscriptions;
+  users: typeof users;
 }>;
 
 /**

@@ -23,10 +23,15 @@ function configureVapid() {
 // Dead subscriptions (the browser/OS reports them gone) are cleaned up so the
 // list doesn't accumulate stale entries.
 export const sendToAll = internalAction({
-  args: { title: v.string(), body: v.string(), tag: v.string() },
-  handler: async (ctx, { title, body, tag }) => {
+  args: {
+    title: v.string(),
+    body: v.string(),
+    tag: v.string(),
+    userId: v.optional(v.id('users')),
+  },
+  handler: async (ctx, { title, body, tag, userId }) => {
     configureVapid();
-    const subs = await ctx.runQuery(internal.subscriptions.listInternal, {});
+    const subs = await ctx.runQuery(internal.subscriptions.listInternal, { userId });
     const payload = JSON.stringify({ title, body, tag });
 
     await Promise.all(

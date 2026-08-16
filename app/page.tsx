@@ -1,5 +1,5 @@
-import ShiftlogApp from '@/components/ShiftlogApp';
+import AuthGate from '@/components/AuthGate';
 
 export default function Page() {
-  return <ShiftlogApp />;
+  return <AuthGate />;
 }
